@@ -1,46 +1,42 @@
 import React from "react";
-import {
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
-  FormHelperText,
-  Input,
-  Box,
-  Button,
-} from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
 import { Formik, Form } from "formik";
 import Wrapper from "../components/Wrapper";
 import InputField from "../components/InputField";
-import { useMutation } from "urql";
+// import { useMutation } from "urql";
+import { useRegisterMutation } from "../src/generated/graphql";
+import { toError } from "../src/utils/toErrorMap";
+import { useRouter } from "next/router";
 
-type Props = {};
+// type Props = {};
 
-const REGISTER_MUT = `
-mutation Register ($username: String! , $password:String!){
-    register(options: {username :$username, password:$password}){
-        errors{
-            field
-            message
-        }
-        user{
-            id
-            username
-        }
+const Register = () => {
+  const router = useRouter();
+  const [, register] = useRegisterMutation();
+
+
+
+  const fetchRegisterdata = async (values :any, { setErrors }) => {
+    console.log(values);
+    const response = await register(values);
+    console.log(response);
+    if (response.data?.register.errors) {
+      // [{field: "username", message:"something wrong"}]
+      setErrors(toError(response.data.register.errors));
+    } else if (response.data?.register.user) {
+      router.push("/");
     }
-}`;
+    console.log("data", response);
+    return;
+  };
 
-const Register = (props: Props) => {
-  const [data, register] = useMutation(REGISTER_MUT);
+
+
   return (
     <Wrapper variant="small">
       <Formik
         initialValues={{ username: "", password: "" }}
-        onSubmit={async (value) => {
-          console.log(value);
-          const response = await register(value);
-          console.log("data", data);
-          return;
-        }}
+        onSubmit={fetchRegisterdata}
       >
         {({ isSubmitting }) => (
           <Form>
@@ -68,3 +64,17 @@ const Register = (props: Props) => {
 };
 
 export default Register;
+
+// onSubmit={async (values, { setErrors }) => {
+//   console.log(values);
+//   const response = await register(values);
+//   console.log(response);
+//   if (response.data?.register.errors) {
+//     // [{field: "username", message:"something wrong"}]
+//     setErrors(toError(response.data.register.errors));
+//   } else if (response.data?.register.user) {
+//     router.push("/");
+//   }
+//   console.log("data", response);
+//   return;
+// }}

@@ -1,12 +1,21 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import type { NextPage } from "next";
+import { withUrqlClient } from "next-urql";
+import Navbar from "../components/Navbar";
+import { usePostsQuery } from "../src/generated/graphql";
+import { createUrqlCleint } from "../src/utils/createUrqlClient";
 
 const Home: NextPage = () => {
+  const [{ data }] = usePostsQuery();
   return (
-    <div>hello world</div>
-  )
-}
+    <>
+      <Navbar />
+      {!data ? (
+        <div>loading...</div>
+      ) : (
+        data.posts.map((item) => <div key={item.id}>{item.title}</div>)
+      )}
+    </>
+  );
+};
 
-export default Home
+export default withUrqlClient(createUrqlCleint, { ssr: true })(Home);
